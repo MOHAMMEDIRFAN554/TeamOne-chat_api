@@ -14,31 +14,48 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'production';
 }
 
+// Neural Stability Heartbeat (Confirming process longevity)
+setInterval(() => {
+    console.log(`[NEURAL_PULSE] ${new Date().toISOString()} | Uptime: ${process.uptime().toFixed(1)}s | State: ALIVE`);
+}, 10000);
+
 const app = express();
+
+// Diagnostic Routes (Pre-empting middleware for fast health checks)
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+
+app.get('/', (req, res) => {
+    const status = {
+        message: 'Neural Gateway: ONLINE',
+        ready: true,
+        protocol: 'V4.5',
+        database: {
+            state: mongoose.connection.readyState,
+            status: ['DISCONNECTED', 'CONNECTED', 'CONNECTING', 'DISCONNECTING'][mongoose.connection.readyState] || 'UNKNOWN'
+        },
+        telemetry: {
+            uptime: process.uptime(),
+            memory: process.memoryUsage().rss
+        }
+    };
+    res.json(status);
+});
 
 // Traffic Telemetry: High-fidelity request logging
 app.use((req, res, next) => {
-    console.log(`[NEURAL_TRAFFIC] ${new Date().toISOString()} | ${req.method} ${req.path} | Origin: ${req.get('origin') || 'Internal'}`);
+    console.log(`[NEURAL_TRAFFIC] ${new Date().toISOString()} | ${req.method} ${req.path} | Origin: ${req.get('origin') || 'Internal'} | IP: ${req.ip}`);
     next();
 });
 
-// Deployment CORS Configuration
-const allowedOrigins = [
-    'https://teamone-chat.onrender.com',
-    'http://localhost:5173',
-    'http://localhost:3000'
-];
-
+// Perceptive CORS Protocol (Expanded for debugging cluster blockage)
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        // Or specific allowed origins
-        // Or any .onrender.com domain to prevent blockage
-        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+        // Log all blocked origins for diagnostics
+        if (!origin || origin.includes('localhost') || origin.includes('remoteblood.onrender.com') || origin.endsWith('.onrender.com') || origin.endsWith('.railway.app')) {
             callback(null, true);
         } else {
-            console.warn(`[BLOCK_CORS] Unauthorized access attempt from: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            console.warn(`[WARN_CORS] Permissive bypass active for: ${origin}`);
+            callback(null, true); // Temporarily allow ALL for V4.5 debugging
         }
     },
     credentials: true,
@@ -57,20 +74,11 @@ app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
 
-app.get('/', (req, res) => {
-    const status = {
-        message: 'Neural Gateway: ONLINE',
-        database: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'CONNECTING/DISCONNECTED',
-        environment: process.env.NODE_ENV
-    };
-    res.json(status);
-});
-
-app.get('/api/health', (req, res) => {
+// Health Check Endpoint (For monitoring clusters)
+app.use('/api/health', (req, res) => {
     res.json({
         status: 'UP',
-        environment: process.env.NODE_ENV,
-        database: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED',
+        database: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'STATUS_' + mongoose.connection.readyState,
         timestamp: new Date().toISOString()
     });
 });
