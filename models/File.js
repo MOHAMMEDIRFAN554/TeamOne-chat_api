@@ -5,9 +5,9 @@ const fileSchema = mongoose.Schema({
         type: String,
         required: true,
     },
-    s3Key: {
+    base64Data: {
         type: String,
-        required: true, // Path or S3 key
+        required: true, // Direct BSON storage
     },
     mimeType: {
         type: String,
