@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
+const mongoose = require('mongoose');
 
 dotenv.config();
 
@@ -57,7 +58,12 @@ app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
 
 app.get('/', (req, res) => {
-    res.send('API is running...');
+    const status = {
+        message: 'Neural Gateway: ONLINE',
+        database: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'CONNECTING/DISCONNECTED',
+        environment: process.env.NODE_ENV
+    };
+    res.json(status);
 });
 
 app.get('/api/health', (req, res) => {
@@ -81,23 +87,33 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Explicitly bind to 0.0.0.0 for Railway health checks
-app.listen(PORT, '0.0.0.0', () => {
+// Direct Listener Binding
+app.listen(PORT, () => {
     console.log('--- SYSTEM_INITIALIZATION ---');
     console.log(`Neural Core: ACTIVE`);
-    console.log(`Protocol Level: V4.3`);
+    console.log(`Protocol Level: V4.4`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Gateway Port: ${PORT}`);
-    console.log(`Interface: 0.0.0.0`); // Correct binding for cluster ingress
     console.log(`CORS Policy: RESTRICTED`);
     console.log('--- READY_FOR_SIGNAL ---');
 });
 
-// Termination Signals Telemetry
+// Termination Signals & Crash Telemetry
 process.on('SIGTERM', () => {
     console.log('[SYSTEM_TERMINATION] SIGTERM received. Gracefully closing neural links...');
 });
 
 process.on('SIGINT', () => {
     console.log('[SYSTEM_TERMINATION] SIGINT received. Shutting down cluster...');
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error(`[CRITICAL_REJECTION] Unhandled Rejection: ${err.message}`);
+    console.error(err.stack);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error(`[CRITICAL_EXCEPTION] Uncaught Exception: ${err.message}`);
+    console.error(err.stack);
+    process.exit(1);
 });
