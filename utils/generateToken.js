@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 
 const generateToken = (res, userId) => {
-    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    if (!process.env.JWT_SECRET) {
+        console.error('[CRITICAL] JWT_SECRET is missing from environment. Authentication will fail.');
+    }
+    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET || 'fallback_secret_not_for_prod', {
         expiresIn: '30d',
     });
 

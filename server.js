@@ -8,22 +8,45 @@ dotenv.config();
 
 connectDB();
 
+// Protocol Enforcement: Default to production unless explicitly local
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production';
+}
+
 const app = express();
 
-// CORS configuration
-const corsOptions = {
-    origin: [
-        'https://teamone-chat.onrender.com',
-        'http://localhost:5173',
-        'http://localhost:3000'
-    ],
+// Traffic Telemetry: High-fidelity request logging
+app.use((req, res, next) => {
+    console.log(`[NEURAL_TRAFFIC] ${new Date().toISOString()} | ${req.method} ${req.path} | Origin: ${req.get('origin') || 'Internal'}`);
+    next();
+});
+
+// Deployment CORS Configuration
+const allowedOrigins = [
+    'https://teamone-chat.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        // Or specific allowed origins
+        // Or any .onrender.com domain to prevent blockage
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+            callback(null, true);
+        } else {
+            console.warn(`[BLOCK_CORS] Unauthorized access attempt from: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-};
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
