@@ -81,12 +81,23 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// Explicitly bind to 0.0.0.0 for Railway health checks
+app.listen(PORT, '0.0.0.0', () => {
     console.log('--- SYSTEM_INITIALIZATION ---');
     console.log(`Neural Core: ACTIVE`);
-    console.log(`Protocol Level: V4.2`);
+    console.log(`Protocol Level: V4.3`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Gateway Port: ${PORT}`);
+    console.log(`Interface: 0.0.0.0`); // Correct binding for cluster ingress
     console.log(`CORS Policy: RESTRICTED`);
     console.log('--- READY_FOR_SIGNAL ---');
+});
+
+// Termination Signals Telemetry
+process.on('SIGTERM', () => {
+    console.log('[SYSTEM_TERMINATION] SIGTERM received. Gracefully closing neural links...');
+});
+
+process.on('SIGINT', () => {
+    console.log('[SYSTEM_TERMINATION] SIGINT received. Shutting down cluster...');
 });
