@@ -50,5 +50,11 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    console.log('--- SYSTEM_INITIALIZATION ---');
+    console.log(`Neural Core: ACTIVE`);
+    console.log(`Protocol Level: V4.2`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Gateway Port: ${PORT}`);
+    console.log(`CORS Policy: RESTRICTED`);
+    console.log('--- READY_FOR_SIGNAL ---');
 });
